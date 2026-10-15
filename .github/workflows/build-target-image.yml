@@ -44,6 +44,14 @@ jobs:
         working-directory: ./test/${{inputs.image-short-name}}
         run: echo "semantic_version=$(cat version.txt)" >> $GITHUB_ENV
 
+      - name: Extract Python version (pip-based images only)
+        if: steps.changes.outputs.src == 'true'
+        working-directory: ./test/${{inputs.image-short-name}}
+        run: |
+          if [ -f python-version.txt ]; then
+            echo "python_version=$(cat python-version.txt)" >> $GITHUB_ENV
+          fi
+
       - name: Log-in to ghcr.io registry
         if: steps.changes.outputs.src == 'true'
         uses: docker/login-action@v4
@@ -76,6 +84,7 @@ jobs:
               notebook=${{inputs.notebook-name}}
               sub_dir=${{inputs.image-short-name}}
               shared_utils=${{inputs.shared-utils}}
+              python_version=${{ env.python_version }}
 
           file: ./test/${{ inputs.dockerfile }}
           context: ./test

@@ -154,26 +154,30 @@ This manual workflow exposes a `test-suite` choice input in the workflow dispatc
     batchee,casper,podaac-concise,podaac-l2-subsetter,stitchee
     ```
 
-1. Update the `test/Makefile` to be able to build a Docker image for the new
-   test suite optionally including the shared utility directory:
+1. Add a target to `test/Makefile` to build the suite's Docker image. Use the one that matches your environment (see [Choosing an environment](#choosing-an-environment)).
+
+   **conda** (`environment.yaml`):
 
    ```
    <new-suite-name>-image: Dockerfile <new-suite-name>/environment.yaml
-       docker build -t ghcr.io/nasa/regression-tests-<new-suite-name>:latest -f ./[pip.]Dockerfile \
-       --build-arg notebook=<new-test-notebook-name> --build-arg sub_dir=<new-suite-subdirectory> \
+       docker build -t ghcr.io/nasa/regression-tests-<new-suite-name>:latest -f ./Dockerfile \
+       --build-arg notebook=<new-test-notebook-name> --build-arg sub_dir=<new-suite-name> \
        [--build-arg shared_utils=true] .
    ```
 
-   *Suites that use a pip `requirements.txt` instead of a conda `environment.yaml` build with `-f ./pip.Dockerfile` (see [Choosing an environment](#choosing-an-environment)).*
+   **pip** (`requirements.txt`) *newer, preferred method* :
 
+   ```
+   <new-suite-name>-image: pip.Dockerfile <new-suite-name>/requirements.txt <new-suite-name>/python-version.txt
+       docker build -t ghcr.io/nasa/regression-tests-<new-suite-name>:latest -f ./pip.Dockerfile \
+       --build-arg notebook=<new-test-notebook-name> --build-arg sub_dir=<new-suite-name> \
+       [--build-arg shared_utils=true] \
+       --build-arg python_version=$(shell cat <new-suite-name>/python-version.txt) .
+   ```
 
-
-1. If you would like to use shared utilities to help ease the coding you can
-   add the shared_util build-arg to your docker build command in the Makefile
-   (as well as adding it as a key in the `workflow/build-all-images.yml` file).
-   When enabed, this argument will include the `tests/shared_utils` directory
-   as a sibling directory to your tests.  See the
-   `tests/shared_utils/README.md` file for more information.
+   `shared_utils=true` copies `test/shared_utils` into the image as a sibling
+   of your suite (see `test/shared_utils/README.md`). Drop that line if you
+   don't use it, and leave out `shared-utils` in `build-all-images.yml` below.
 
 1. Update the `make images` rule to include building the new image.
 
@@ -204,7 +208,8 @@ file is updated. To do so, simply add a new target to the
    -
      image: <new-suite-name>
      notebook: <new-notebook-name>
-     shared-utils: "true"
+     shared-utils: "true"           # Leave out or set to "false" if not using shared_utils methods.
+     dockerfile: "pip.Dockerfile"   # pip suites only. Leave out if using conda or set to "Dockerfile"
    ```
 
 1. If your test suite is for a new service. Meaning it has an entry on Harmony's [/service-image-tag](https://harmony.earthdata.nasa.gov/service-image-tag) endpoint you should add it to the:
@@ -291,15 +296,16 @@ For example, in the `swath-projector` directory we have
 
 Each suite defines its Python environment either via pip in a requirements.txt
 file or via conda via an environment.yaml file. Use pip if all your
-dependencies are on PyPI and your test python version is flexible, currently
-using python:3.12-slim; use conda if you need conda-forge packages (e.g. GDAL)
+dependencies are on PyPI (the Python version is set per suite in
+`python-version.txt`); use conda if you need conda-forge packages (e.g. GDAL)
 or need to specify your python version explicitly.
 
 |                        | conda                          | pip                                               |
 |------------------------|--------------------------------|---------------------------------------------------|
 | Dependency file        | `environment.yaml`             | `requirements.txt` (pinned versions)              |
-| Dockerfile             | `test/Dockerfile` (micromamba) | `test/pip.Dockerfile` (`python:3.12-slim` + `uv`) |
-| `test/Makefile` target | `-f ./Dockerfile`              | `-f ./pip.Dockerfile`                             |
+| Dockerfile             | `test/Dockerfile` (micromamba) | `test/pip.Dockerfile` (`python:<ver>-slim` + `uv`) |
+| `test/Makefile` target | `-f ./Dockerfile`              | `-f ./pip.Dockerfile` and `--build-arg python_version=$(shell cat <suite>/python-version.txt)` |
+| Python version         | `python=` in `environment.yaml` | `test/<suite>/python-version.txt` (e.g. `3.14`)   |
 | `build-all-images.yml` | nothing extra                  | `dockerfile: "pip.Dockerfile"`                    |
 | Example suite          | `test/hoss`                    | `test/smap-l2-gridder`                            |
 
