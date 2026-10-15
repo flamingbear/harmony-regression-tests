@@ -17,7 +17,6 @@ to document pull requests to this repository.
 - smap-l2-gridder
    + Added `python-version.txt` (3.14) to set the pip.Dockerfile base image.
 
-
 ## 2026-10-14 ([#338](https://github.com/nasa/harmony-regression-tests/pull/338))
 
 ### Changed
