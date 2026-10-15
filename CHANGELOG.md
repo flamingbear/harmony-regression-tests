@@ -5,6 +5,19 @@ versioning. Rather than a static releases, this repository contains of a number
 of regression tests that are each semi-independent.  This CHANGELOG file should be used
 to document pull requests to this repository.
 
+## 2026-10-15 ([#TODO](https://github.com/nasa/harmony-regression-tests/pull/TODO))
+
+### Changed
+
+- pip.Dockerfile
+   + Base image is now `python:<python_version>-slim`, where `python_version` is a
+     required build arg read from each suite's `python-version.txt` by the
+     Makefile and `build-target-image.yml`. (only applies to non-conda suites)
+
+- smap-l2-gridder
+   + Added `python-version.txt` (3.14) to set the pip.Dockerfile base image.
+
+
 ## 2026-10-14 ([#338](https://github.com/nasa/harmony-regression-tests/pull/338))
 
 ### Changed

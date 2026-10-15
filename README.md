@@ -164,7 +164,7 @@ This manual workflow exposes a `test-suite` choice input in the workflow dispatc
        [--build-arg shared_utils=true] .
    ```
 
-   *Suites that use a pip `requirements.txt` instead of a conda `environment.yaml` build with `-f ./pip.Dockerfile` (see [Choosing an environment](#choosing-an-environment)).*
+   *Suites that use a pip `requirements.txt` instead of a conda `environment.yaml` build with `-f ./pip.Dockerfile` and `--build-arg python_version=$(shell cat <new-suite-name>/python-version.txt)` (see [Choosing an environment](#choosing-an-environment)).*
 
 
 
@@ -291,15 +291,16 @@ For example, in the `swath-projector` directory we have
 
 Each suite defines its Python environment either via pip in a requirements.txt
 file or via conda via an environment.yaml file. Use pip if all your
-dependencies are on PyPI and your test python version is flexible, currently
-using python:3.12-slim; use conda if you need conda-forge packages (e.g. GDAL)
+dependencies are on PyPI (the Python version is set per suite in
+`python-version.txt`); use conda if you need conda-forge packages (e.g. GDAL)
 or need to specify your python version explicitly.
 
 |                        | conda                          | pip                                               |
 |------------------------|--------------------------------|---------------------------------------------------|
 | Dependency file        | `environment.yaml`             | `requirements.txt` (pinned versions)              |
-| Dockerfile             | `test/Dockerfile` (micromamba) | `test/pip.Dockerfile` (`python:3.12-slim` + `uv`) |
-| `test/Makefile` target | `-f ./Dockerfile`              | `-f ./pip.Dockerfile`                             |
+| Dockerfile             | `test/Dockerfile` (micromamba) | `test/pip.Dockerfile` (`python:<ver>-slim` + `uv`) |
+| `test/Makefile` target | `-f ./Dockerfile`              | `-f ./pip.Dockerfile` and `--build-arg python_version=$(shell cat <suite>/python-version.txt)` |
+| Python version         | `python=` in `environment.yaml` | `test/<suite>/python-version.txt` (e.g. `3.14`)   |
 | `build-all-images.yml` | nothing extra                  | `dockerfile: "pip.Dockerfile"`                    |
 | Example suite          | `test/hoss`                    | `test/smap-l2-gridder`                            |
 

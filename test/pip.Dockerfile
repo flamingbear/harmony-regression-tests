@@ -1,4 +1,8 @@
-FROM python:3.14-slim
+# check=skip=InvalidDefaultArgInFrom
+# Each suite pins its Python version in <suite>/python-version.txt, which the
+# Makefile and build-target-image.yml pass in as this build arg.
+ARG python_version
+FROM python:${python_version}-slim
 
 COPY --from=ghcr.io/astral-sh/uv:0.12.23 /uv /usr/local/bin/uv
 
